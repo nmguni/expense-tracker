@@ -7,10 +7,13 @@ const descriptionEl = document.getElementById("description");
 const amountEl = document.getElementById("amount");
 
 
+
 //  wrapped with json to get structured data insted of string
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
 transactionFormEl.addEventListener("submit", addTransaction);
+
+
 
 function addTransaction(e) {
    // stops refreshing page
@@ -28,24 +31,23 @@ function addTransaction(e) {
 
    localStorage.setItem("transactions", JSON.stringify(transactions));
 
-   updateTransactonsList()
+   updateTransactionList()
    updateSummery()
 
-   transactionFormEl.requestFullscreen()
+   transactionFormEl.reset()
 }
 
-function updateTransactonsList() {
-   transactionFormEl.innerHTML = "";
+
+
+function updateTransactionList() {
+   transactionListEl.innerHTML = "";
 
    const sortedTransactions = [...transactions].reverse();
 
-
-
    sortedTransactions.forEach((transaction) => {
-      const transactionEl = createTransactionElement(transaction)
-      transactionListEl.apendChild(transactionEl)
-
-   })
+      const transactionEl = createTransactionElement(transaction);
+      transactionListEl.appendChild(transactionEl);
+   });
 }
 
 function createTransactionElement(transaction) {
@@ -55,10 +57,45 @@ function createTransactionElement(transaction) {
 
    li.innerHTML = `
    <span>${transaction.description}</span>
-   <span>${transaction.amount}</span>
+   <span>${formatCurrency(transaction.amount)}</span>
    <button class="delete-btn" onclick="removeTransaction(${transaction.id})">X</button>
    `;
 
    return li
 }
 
+function updateSummery() {
+   const balance = transactions.reduce((acc, tranaction) => acc + tranaction.amount, 0)
+
+   const income = transactions.filter(transaction => transaction.amount > 0).reduce((acc, transaction) => acc + transaction.amount, 0)
+
+   const expenses = transactions.filter(transaction => transaction.amount < 0).reduce((acc, transaction) => acc + transaction.amount, 0)
+
+   // update ui =
+   balanceEl.textContent = formatCurrency(balance);
+   incomeAmountEl.textContent = formatCurrency(income)
+   expenseAmountEl.textContent = formatCurrency(expenses)
+
+}
+
+function formatCurrency(number) {
+   return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+   }).format(number)
+}
+
+function removeTransaction(id) {
+   // filter out the one we want to date
+   transactions = transactions.filter((transaction) => transaction.id !== id);
+
+
+   localStorage.setItem("transactions", JSON.stringify(transactions))
+
+   updateTransactionList()
+   updateSummery()
+}
+
+// inital render
+updateTransactionList()
+updateSummery()
